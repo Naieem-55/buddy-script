@@ -30,8 +30,14 @@ class LocalDiskStorage implements StorageAdapter {
 
 class VercelBlobStorage implements StorageAdapter {
   async save(buffer: Buffer, ext: string): Promise<string> {
+    // Copy into a freshly allocated (non-shared) ArrayBuffer: on Vercel's
+    // runtime the incoming bytes can be SharedArrayBuffer-backed, which
+    // undici's fetch (used by @vercel/blob) rejects.
+    const bytes = new Uint8Array(buffer.byteLength);
+    bytes.set(buffer);
+    const body = Buffer.from(bytes.buffer, 0, bytes.byteLength);
     // Uses BLOB_READ_WRITE_TOKEN, injected automatically on Vercel.
-    const { url } = await put(`posts/${randomBytes(12).toString("hex")}.${ext}`, buffer, {
+    const { url } = await put(`posts/${randomBytes(12).toString("hex")}.${ext}`, body, {
       access: "public",
       contentType: `image/${ext}`,
       addRandomSuffix: true,
