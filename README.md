@@ -39,7 +39,30 @@ The original design is preserved exactly — the theme's CSS is served verbatim 
 
 ## Getting started (local)
 
-**Prerequisites:** Node 20.9+, a PostgreSQL instance.
+**Prerequisites:** Node 20.9+ and a running PostgreSQL instance.
+
+### Quick start (copy-paste)
+
+Installs dependencies, sets up the database, seeds demo data, and starts the app:
+
+```bash
+# 1. install all dependencies
+npm install
+
+# 2. create the env file, then edit DATABASE_URL + the two JWT secrets
+cp .env.example .env
+
+# 3. create the database schema, generate the Prisma client, and seed demo data
+npx prisma migrate dev --name init
+npm run db:seed
+
+# 4. start the dev server -> http://localhost:3000
+npm run dev
+```
+
+> Don't have Postgres locally? Use Docker instead — see [Run with Docker](#run-with-docker) below (no manual DB setup needed).
+
+### Step-by-step
 
 ```bash
 npm install
@@ -122,6 +145,59 @@ All mutating routes require the `x-buddy-csrf: 1` header (set automatically by t
 
 ---
 
+## Database schema
+
+```
+User
+  id            PK, cuid
+  firstName     text
+  lastName      text
+  email         text, UNIQUE
+  passwordHash  text
+  avatarUrl     text, nullable
+  createdAt     timestamp
+
+Post
+  id            PK, cuid
+  authorId      FK -> User.id (cascade)
+  text          text, nullable
+  imageUrl      text, nullable
+  visibility    enum { PUBLIC, PRIVATE }
+  likeCount     int (denormalized)
+  commentCount  int (denormalized)
+  createdAt     timestamp
+  index (createdAt, id)        -- keyset pagination
+  index (authorId, createdAt)
+
+Comment
+  id            PK, cuid
+  postId        FK -> Post.id (cascade)
+  authorId      FK -> User.id (cascade)
+  parentId      FK -> Comment.id (cascade), nullable   -- self-ref = reply
+  text          text
+  likeCount     int (denormalized)
+  createdAt     timestamp
+  index (postId, parentId, createdAt)
+
+PostLike
+  userId        FK -> User.id (cascade)
+  postId        FK -> Post.id (cascade)
+  createdAt     timestamp
+  PK (userId, postId)          -- idempotent like
+  index (postId, createdAt)
+
+CommentLike
+  userId        FK -> User.id (cascade)
+  commentId     FK -> Comment.id (cascade)
+  createdAt     timestamp
+  PK (userId, commentId)
+  index (commentId, createdAt)
+```
+
+Relations: `User 1─* Post`, `User 1─* Comment`, `Post 1─* Comment`, `Comment 1─* Comment` (replies), `User *─* Post` via `PostLike`, `User *─* Comment` via `CommentLike`. Canonical source: `prisma/schema.prisma`.
+
+---
+
 ## Designed for scale (millions of posts / reads)
 
 - **Keyset pagination** on `(createdAt, id)` — constant-time deep pages (no `OFFSET`).
@@ -135,12 +211,45 @@ All mutating routes require the `x-buddy-csrf: 1` header (set automatically by t
 
 ## Security
 
-- argon2id password hashing; passwords never leave the server.
-- httpOnly + SameSite cookies; no tokens in JS-readable storage.
-- Zod validation on all inputs; server-side ownership + privacy checks on every route.
-- Upload hardening: mime whitelist, 5 MB cap, random filenames, `sharp` re-encode (EXIF stripped), path-traversal-safe serving.
-- Rate limiting on auth/write endpoints; security headers via `next.config.ts`.
-- Generic auth errors to avoid user enumeration.
+**Passwords** (`lib/password.ts`)
+- argon2id hashing (memory-hard, GPU-resistant). Passwords are never returned in any response.
+
+**Authentication & sessions** (`lib/auth.ts`, `proxy.ts`)
+- JWT stored in **httpOnly** cookies — not readable by JavaScript, which blocks XSS token theft.
+- Cookie flags: `Secure` (in production), `SameSite=Lax`, `Path=/`.
+- Short-lived **access** token (15 min) + rotating **refresh** token (7 days); the access cookie is silently renewed from the refresh token in `proxy.ts`.
+- `/feed` is guarded by `proxy.ts` and re-checked server-side in the page — never UI-only.
+
+**CSRF** (`lib/csrf.ts`)
+- Every mutating route requires the custom header `x-buddy-csrf: 1`. Cross-site forms/images cannot set custom headers and CORS blocks cross-origin requests — defense-in-depth on top of SameSite cookies.
+
+**Authorization & privacy** (`lib/access.ts`, route handlers)
+- Every read query enforces `visibility = PUBLIC OR authorId = me`, so private posts never leak.
+- A private post the viewer can't see returns **404** (not 403) — indistinguishable from a non-existent one.
+- Deleting a post/comment is author-only, verified server-side.
+
+**Input validation** (`lib/validation.ts`)
+- A Zod schema validates every request (body, query, params, multipart). Invalid input → `422`.
+
+**File upload hardening** (`lib/storage.ts`, `app/api/uploads`)
+- Mime whitelist (jpeg/png/webp) + 5 MB size cap.
+- `sharp` re-encodes every upload → strips EXIF/embedded payloads and normalizes the format.
+- Random, unguessable filenames; the original filename is never trusted.
+- Serving is path-traversal-safe (confined to the upload dir), `nosniff`, `Content-Disposition: inline`, no execution.
+
+**Rate limiting** (`lib/rateLimit.ts`)
+- Fixed-window limiter on auth (login/register) and write endpoints to brake brute-force / spam. (Swap for Redis in multi-instance prod — same interface.)
+
+**Response headers** (`next.config.ts`)
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (clickjacking), `Referrer-Policy`, `Permissions-Policy`.
+
+**Anti-enumeration**
+- Login returns a generic "Invalid email or password" and always runs the hash-verify path to reduce timing signals.
+
+**Secrets**
+- JWT secrets and the DB URL live in env only; `.env` is gitignored, `.env.example` is committed.
+
+Verified: missing CSRF → `403`, unauthenticated → `401`, wrong password → generic `401`, path traversal → `400`, non-image upload → `422`.
 
 ---
 
