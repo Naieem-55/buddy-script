@@ -1,0 +1,171 @@
+/* Custom additions on top of the Buddy Script theme (loaded after the theme
+   CSS so these win). Only styles the theme does not already provide:
+   the likers modal, image preview, privacy toggle, and small helpers. */
+
+.bs-clickable {
+  cursor: pointer;
+}
+
+.bs-error {
+  color: #e5484d;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.bs-field-error {
+  color: #e5484d;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Composer image preview */
+.bs-image-preview {
+  position: relative;
+  margin: 12px 0 4px;
+  display: inline-block;
+  max-width: 100%;
+}
+.bs-image-preview img {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 8px;
+  display: block;
+}
+.bs-image-preview button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Privacy toggle in composer */
+.bs-privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e5e9f2;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+._dark_wrapper .bs-privacy {
+  background: #232e42;
+  border-color: #2f3b52;
+  color: #cfd8e6;
+}
+
+/* Likers modal */
+.bs-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 32, 50, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.bs-modal {
+  background: #fff;
+  width: 100%;
+  max-width: 380px;
+  max-height: 70vh;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+._dark_wrapper .bs-modal {
+  background: #232e42;
+  color: #fff;
+}
+.bs-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #eef1f6;
+  font-weight: 600;
+}
+._dark_wrapper .bs-modal-head {
+  border-color: #2f3b52;
+}
+.bs-modal-head button {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: inherit;
+  line-height: 1;
+}
+.bs-modal-body {
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.bs-liker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+}
+.bs-liker img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.bs-liker span {
+  font-size: 14px;
+  font-weight: 500;
+}
+.bs-muted {
+  padding: 18px;
+  color: #8a94a6;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* make like actions look interactive */
+._feed_reaction,
+._comment_reply_list li span,
+._reaction_like,
+._total_react {
+  cursor: pointer;
+}
+
+/* liked state accent */
+._feed_reaction_active ._feed_inner_timeline_reaction_link,
+.bs-liked {
+  color: #377dff !important;
+  font-weight: 600;
+}
+
+/* spinner */
+.bs-spin {
+  text-align: center;
+  padding: 24px;
+  color: #8a94a6;
+  font-size: 14px;
+}
+
+.bs-inline-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}

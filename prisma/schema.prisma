@@ -1,0 +1,90 @@
+// Buddy Script — data model
+// Relational model tuned for millions of posts/reads:
+//  - keyset pagination indexes, denormalized counters, separate like tables.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  posts        Post[]
+  comments     Comment[]
+  postLikes    PostLike[]
+  commentLikes CommentLike[]
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+model Post {
+  id           String     @id @default(cuid())
+  authorId     String
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  text         String?
+  imageUrl     String?
+  visibility   Visibility @default(PUBLIC)
+  likeCount    Int        @default(0) // denormalized
+  commentCount Int        @default(0) // denormalized
+  createdAt    DateTime   @default(now())
+
+  comments Comment[]
+  likes    PostLike[]
+
+  @@index([createdAt, id]) // keyset pagination
+  @@index([authorId, createdAt]) // author's own posts
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String? // self-reference -> reply
+  parent    Comment? @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("Replies")
+  text      String
+  likeCount Int      @default(0) // denormalized
+  createdAt DateTime @default(now())
+
+  likes CommentLike[]
+
+  @@index([postId, parentId, createdAt])
+}
+
+model PostLike {
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId]) // idempotent like + fast "did I like"
+  @@index([postId, createdAt]) // "who liked" list + count
+}
+
+model CommentLike {
+  userId    String
+  commentId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, commentId])
+  @@index([commentId, createdAt])
+}
