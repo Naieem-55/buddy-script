@@ -169,3 +169,207 @@
   color: inherit;
   font: inherit;
 }
+
+/* ------------------------------------------------------------------ */
+/* Professional polish — feed only. Additive refinements layered on   */
+/* top of the theme: motion, hover/focus feedback, states. No layout  */
+/* or visual identity changes.                                        */
+/* ------------------------------------------------------------------ */
+
+/* Cards: gentle elevation on hover */
+._feed_inner_timeline_post_area,
+._feed_inner_text_area {
+  transition: box-shadow 0.2s ease;
+}
+._feed_inner_timeline_post_area:hover {
+  box-shadow: 0 6px 24px rgba(17, 32, 50, 0.07);
+}
+._dark_wrapper ._feed_inner_timeline_post_area:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Reaction bar: hover feedback + like micro-animation */
+._feed_reaction {
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+._feed_reaction:hover {
+  background-color: rgba(55, 125, 255, 0.07);
+}
+._dark_wrapper ._feed_reaction:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+@keyframes bs-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+._feed_reaction_active svg {
+  animation: bs-pop 0.25s ease;
+}
+
+/* Composer: focus ring, button states */
+._textarea:focus,
+._comment_textarea:focus {
+  border-color: #377dff !important;
+  box-shadow: 0 0 0 3px rgba(55, 125, 255, 0.12) !important;
+  outline: none;
+}
+._feed_inner_text_area_btn_link {
+  transition: box-shadow 0.2s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+._feed_inner_text_area_btn_link:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(55, 125, 255, 0.35);
+}
+._feed_inner_text_area_btn_link:active:not(:disabled) {
+  transform: translateY(1px);
+}
+._feed_inner_text_area_btn_link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.bs-privacy {
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.bs-privacy:hover {
+  border-color: #377dff;
+  color: #377dff;
+}
+.bs-image-preview img {
+  box-shadow: 0 2px 12px rgba(17, 32, 50, 0.12);
+}
+.bs-image-preview button {
+  transition: background 0.15s ease;
+}
+.bs-image-preview button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Comment action links */
+._comment_reply_list li span {
+  transition: color 0.12s ease;
+}
+._comment_reply_list li span:hover {
+  color: #377dff;
+}
+
+/* Comment send button as pill */
+._feed_inner_comment_box_icon_btn {
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(55, 125, 255, 0.08);
+  transition: background 0.15s ease;
+}
+._feed_inner_comment_box_icon_btn:hover:not(:disabled) {
+  background: rgba(55, 125, 255, 0.18);
+}
+._feed_inner_comment_box_icon_btn:disabled {
+  opacity: 0.6;
+}
+
+/* Likers modal: entrance motion, row + close hover, tidy scrollbar */
+.bs-modal-overlay {
+  backdrop-filter: blur(2px);
+  animation: bs-fade 0.15s ease;
+}
+.bs-modal {
+  animation: bs-rise 0.18s ease;
+}
+@keyframes bs-fade {
+  from { opacity: 0; }
+}
+@keyframes bs-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+.bs-liker {
+  transition: background 0.12s ease;
+}
+.bs-liker:hover {
+  background: #f5f7fb;
+}
+._dark_wrapper .bs-liker:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.bs-modal-head button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease;
+}
+.bs-modal-head button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+._dark_wrapper .bs-modal-head button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.bs-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.bs-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(138, 148, 166, 0.4);
+  border-radius: 3px;
+}
+
+/* Feed status: animated spinner, end-of-feed divider, empty state */
+.bs-spinner {
+  width: 22px;
+  height: 22px;
+  margin: 0 auto;
+  border: 2px solid rgba(55, 125, 255, 0.25);
+  border-top-color: #377dff;
+  border-radius: 50%;
+  animation: bs-rotate 0.7s linear infinite;
+}
+@keyframes bs-rotate {
+  to { transform: rotate(360deg); }
+}
+.bs-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #8a94a6;
+  font-size: 13px;
+  padding: 20px 8px;
+}
+.bs-end::before,
+.bs-end::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e9f2;
+}
+._dark_wrapper .bs-end::before,
+._dark_wrapper .bs-end::after {
+  background: #2f3b52;
+}
+.bs-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8a94a6;
+}
+.bs-empty svg {
+  margin-bottom: 12px;
+  opacity: 0.45;
+}
+.bs-empty p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Keyboard focus visibility (accessibility) */
+.bs-inline-btn:focus-visible,
+._feed_reaction:focus-visible,
+.bs-privacy:focus-visible,
+._feed_inner_comment_box_icon_btn:focus-visible {
+  outline: 2px solid #377dff;
+  outline-offset: 2px;
+  border-radius: 6px;
+}

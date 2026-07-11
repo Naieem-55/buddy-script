@@ -91,7 +91,22 @@ export default function FeedColumn({
 
         {posts.length === 0 && (
           <div className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _padd_r24 _padd_l24 _mar_b16">
-            <p className="bs-muted">No posts yet. Be the first to post!</p>
+            <div className="bs-empty">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <p>No posts yet. Be the first to share something!</p>
+            </div>
           </div>
         )}
 
@@ -105,9 +120,13 @@ export default function FeedColumn({
         ))}
 
         <div ref={sentinel} />
-        {isFetchingNextPage && <div className="bs-spin">Loading…</div>}
+        {isFetchingNextPage && (
+          <div className="bs-spin" role="status" aria-label="Loading more posts">
+            <div className="bs-spinner" />
+          </div>
+        )}
         {!hasNextPage && posts.length > 0 && (
-          <div className="bs-spin">You&apos;re all caught up.</div>
+          <div className="bs-end">You&apos;re all caught up</div>
         )}
       </div>
     </div>
