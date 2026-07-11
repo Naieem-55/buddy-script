@@ -2,14 +2,16 @@ import { randomBytes } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { put } from "@vercel/blob";
 
 /**
- * Storage adapter. `local` writes re-encoded images to disk (served by
- * /api/uploads/*). Swap in a Blob/S3 driver for serverless deploys where the
- * filesystem is ephemeral — the rest of the app only depends on this interface.
+ * Storage adapter. The rest of the app depends only on this interface, so the
+ * backing store is a deploy-time choice:
+ *  - "local"  -> disk, served by /api/uploads/*  (self-host / docker / dev)
+ *  - "vercel" -> Vercel Blob (serverless filesystems are ephemeral)
  */
 export interface StorageAdapter {
-  save(buffer: Buffer, ext: string): Promise<string>; // returns public URL path
+  save(buffer: Buffer, ext: string): Promise<string>; // returns public URL
 }
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -26,10 +28,24 @@ class LocalDiskStorage implements StorageAdapter {
   }
 }
 
+class VercelBlobStorage implements StorageAdapter {
+  async save(buffer: Buffer, ext: string): Promise<string> {
+    // Uses BLOB_READ_WRITE_TOKEN, injected automatically on Vercel.
+    const { url } = await put(`posts/${randomBytes(12).toString("hex")}.${ext}`, buffer, {
+      access: "public",
+      contentType: `image/${ext}`,
+      addRandomSuffix: true,
+      cacheControlMaxAge: 31536000,
+    });
+    return url;
+  }
+}
+
 export function getStorage(): StorageAdapter {
-  // Only the local driver is implemented here; a Vercel Blob driver would be
-  // selected via process.env.STORAGE_DRIVER === "vercel".
-  return new LocalDiskStorage();
+  const driver =
+    process.env.STORAGE_DRIVER ||
+    (process.env.BLOB_READ_WRITE_TOKEN ? "vercel" : "local");
+  return driver === "vercel" ? new VercelBlobStorage() : new LocalDiskStorage();
 }
 
 /**

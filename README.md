@@ -253,9 +253,15 @@ Verified: missing CSRF → `403`, unauthenticated → `401`, wrong password → 
 
 ---
 
-## Deployment (Vercel)
+## Deployment (free)
 
-Deploy to Vercel with a hosted Postgres (Neon/Supabase). Because Vercel's filesystem is ephemeral, swap the local-disk storage for a Blob/S3 driver behind the existing `StorageAdapter` interface (`lib/storage.ts`) and set the storage env accordingly. `npm run build` runs `prisma generate`; run `prisma migrate deploy` against the hosted DB.
+**Vercel (app) + Neon (Postgres) + Vercel Blob (images)** — all free tiers.
+
+Because Vercel's filesystem is ephemeral, set `STORAGE_DRIVER=vercel` to route uploads to Vercel Blob via the `StorageAdapter` interface (`lib/storage.ts`); no other code changes. `npm run build` runs `prisma generate`; run `prisma migrate deploy` against the hosted DB.
+
+👉 Full click-by-click walkthrough: **[DEPLOYMENT.md](./DEPLOYMENT.md)**
+
+Prefer self-hosting? `docker compose up --build` uses the local-disk driver with a persistent volume.
 
 ---
 
